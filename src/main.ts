@@ -1,5 +1,9 @@
 import wasmUrl from "../build/release.wasm?url";
 import type asModule from "../build/release.d";
+// 顶点着色器
+import vertexShaderSource from "./vertexShaderSource.glsl?raw";
+// 片段着色器 - 绘制圆形粒子
+import fragmentShaderSource from "./fragmentShaderSource.glsl?raw";
 
 // WebGL 渲染器
 class ParticleRenderer {
@@ -12,54 +16,6 @@ class ParticleRenderer {
     const gl = canvas.getContext("webgl");
     if (!gl) throw new Error("WebGL not supported");
     this.gl = gl;
-
-    // 顶点着色器
-    const vertexShaderSource = `
-      attribute vec2 a_position;
-      attribute vec2 a_center;
-      attribute float a_radius;
-      
-      uniform vec2 u_resolution;
-      
-      varying vec2 v_position;
-      varying vec2 v_center;
-      varying float v_radius;
-      
-      void main() {
-        // 转换到裁剪空间
-        vec2 clipSpace = (a_position / u_resolution) * 2.0 - 1.0;
-        gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
-        
-        v_position = a_position;
-        v_center = a_center;
-        v_radius = a_radius;
-      }
-    `;
-
-    // 片段着色器 - 绘制圆形粒子
-    const fragmentShaderSource = `
-      precision mediump float;
-      
-      varying vec2 v_position;
-      varying vec2 v_center;
-      varying float v_radius;
-      
-      void main() {
-        float dist = distance(v_position, v_center);
-        if (dist > v_radius) {
-          discard;
-        }
-        
-        // 平滑边缘
-        float normalizedDist = dist / v_radius;
-        float alpha = 1.0 - smoothstep(0.8, 1.0, normalizedDist);
-        
-        // 纯色，不同粒子使用基于位置的颜色
-        vec3 baseColor = vec3(0.4, 0.7, 1.0);
-        
-        gl_FragColor = vec4(baseColor, alpha * 0.9);
-      }
-    `;
 
     // 创建着色器程序
     const vertexShader = this.createShader(
