@@ -5,11 +5,18 @@
 const PARTICLE_SIZE = 6; // 每个粒子的属性数量
 let particleCount: i32 = 0;
 let particles: Float32Array = new Float32Array(0);
+let damping: f32 = 0.999; // 阻尼系数
 
 // 初始化粒子系统
-export function initParticles(count: i32, width: f32, height: f32): void {
+export function initParticles(
+  count: i32,
+  width: f32,
+  height: f32,
+  _damping: f32 = 0.999
+): void {
   particleCount = count;
   particles = new Float32Array(count * PARTICLE_SIZE);
+  damping = _damping;
 
   for (let i = 0; i < count; i++) {
     const offset = i * PARTICLE_SIZE;
@@ -39,7 +46,6 @@ export function getParticlesPtr(): usize {
 // 更新粒子物理
 export function updateParticles(deltaTime: f32, width: f32, height: f32): void {
   const dt = deltaTime;
-  const damping: f32 = 0.999; // 阻尼系数
 
   // 更新位置和速度
   for (let i = 0; i < particleCount; i++) {

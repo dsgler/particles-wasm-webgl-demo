@@ -51,18 +51,12 @@ class ParticleRenderer {
         
         // 平滑边缘
         float normalizedDist = dist / v_radius;
-        float alpha = 1.0 - smoothstep(0.7, 1.0, normalizedDist);
+        float alpha = 1.0 - smoothstep(0.8, 1.0, normalizedDist);
         
-        // 渐变色效果
-        vec3 color1 = vec3(0.3, 0.7, 1.0);
-        vec3 color2 = vec3(1.0, 0.5, 0.3);
-        vec3 color = mix(color1, color2, normalizedDist * 0.5);
+        // 纯色，不同粒子使用基于位置的颜色
+        vec3 baseColor = vec3(0.4, 0.7, 1.0);
         
-        // 添加径向渐变光泽效果
-        float highlight = 1.0 - normalizedDist * 0.5;
-        highlight = pow(highlight, 2.0);
-        
-        gl_FragColor = vec4(color * highlight, alpha * 0.95);
+        gl_FragColor = vec4(baseColor, alpha * 0.9);
       }
     `;
 
@@ -243,9 +237,9 @@ async function main() {
 
   // 初始化粒子系统
   const PARTICLE_COUNT = 800; // 可以调整粒子数量
-  const PARTICLE_SIZE = 6;
+  const PARTICLE_SIZE = 8;
 
-  wasm.initParticles(PARTICLE_COUNT, canvas.width, canvas.height);
+  wasm.initParticles(PARTICLE_COUNT, canvas.width, canvas.height, 0.95);
 
   // 创建渲染器
   const renderer = new ParticleRenderer(canvas);
@@ -288,6 +282,9 @@ async function main() {
       frameCount = 0;
       fpsUpdateTime = currentTime;
     }
+
+    // 应用重力（向下）
+    wasm.applyGravity(0, 10); // 第一个参数是水平重力，第二个是垂直重力
 
     // 鼠标交互
     if (mouseDown) {
