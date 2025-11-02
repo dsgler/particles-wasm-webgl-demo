@@ -1,4 +1,5 @@
 import wasmUrl from "../build/release.wasm?url";
+import type asModule from "../build/release.d";
 
 // WebGL 渲染器
 class ParticleRenderer {
@@ -233,7 +234,7 @@ async function main() {
     },
   });
 
-  const wasm = wasmModule.instance.exports as any;
+  const wasm = wasmModule.instance.exports as typeof asModule;
 
   // 初始化粒子系统
   const PARTICLE_COUNT = 800; // 可以调整粒子数量
