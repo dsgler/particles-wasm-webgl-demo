@@ -12,7 +12,7 @@ export function initParticles(
   count: i32,
   width: f32,
   height: f32,
-  _damping: f32 = 0.999
+  _damping: f32
 ): void {
   particleCount = count;
   particles = new Float32Array(count * PARTICLE_SIZE);
