@@ -6,6 +6,8 @@ const PARTICLE_SIZE = 6; // 每个粒子的属性数量
 let particleCount: i32 = 0;
 let particles: Float32Array = new Float32Array(0);
 let damping: f32 = 0.999; // 阻尼系数
+let minRadius: f32 = 3.0; // 最小半径
+let maxRadius: f32 = 8.0; // 最大半径
 
 // 空间分区优化
 let gridCellSize: f32 = 20.0;
@@ -35,13 +37,26 @@ export function initParticles(
     particles[offset + 2] = <f32>((Math.random() - 0.5) * 50); // vx
     particles[offset + 3] = <f32>((Math.random() - 0.5) * 50); // vy
 
-    // 半径
-    particles[offset + 4] = <f32>(3 + Math.random() * 5); // radius
+    // 半径（使用可配置的范围）
+    particles[offset + 4] = <f32>(
+      (minRadius + Math.random() * (maxRadius - minRadius))
+    ); // radius
 
     // 质量 (与半径成正比)
     const radius = particles[offset + 4];
     particles[offset + 5] = radius * radius; // mass
   }
+}
+
+// 设置粒子半径范围
+export function setRadiusRange(min: f32, max: f32): void {
+  minRadius = min;
+  maxRadius = max;
+}
+
+// 设置阻尼系数
+export function setDamping(value: f32): void {
+  damping = value;
 }
 
 // 获取粒子数据指针

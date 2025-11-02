@@ -1,5 +1,6 @@
 import wasmUrl from "../build/release.wasm?url";
 import type asModule from "../build/release.d";
+import { ControlPanel } from "./ControlPanel";
 // 顶点着色器
 import vertexShaderSource from "./vertexShaderSource.glsl?raw";
 // 片段着色器 - 绘制圆形粒子
@@ -323,11 +324,38 @@ async function main() {
 
   const wasm = wasmModule.instance.exports as typeof asModule;
 
+  // 创建控制面板
+  const controlPanel = new ControlPanel();
+
   // 初始化粒子系统
-  const PARTICLE_COUNT = 800; // 可以调整粒子数量
+  let PARTICLE_COUNT = controlPanel.settings.particleCount;
   const PARTICLE_SIZE = 8;
 
-  wasm.initParticles(PARTICLE_COUNT, canvas.width, canvas.height, 0.95);
+  // 初始化函数
+  function initParticles() {
+    PARTICLE_COUNT = Math.round(controlPanel.settings.particleCount);
+
+    // 设置半径范围
+    wasm.setRadiusRange(
+      controlPanel.settings.minRadius,
+      controlPanel.settings.maxRadius
+    );
+
+    // 初始化粒子
+    wasm.initParticles(
+      PARTICLE_COUNT,
+      canvas.width,
+      canvas.height,
+      controlPanel.settings.damping
+    );
+  }
+
+  initParticles();
+
+  // 控制面板改变时重新初始化粒子
+  controlPanel.onSettingsChange = () => {
+    initParticles();
+  };
 
   // 创建渲染器
   const renderer = new ParticleRenderer(canvas);
@@ -345,6 +373,13 @@ async function main() {
   canvas.addEventListener("mousedown", () => (mouseDown = true));
   canvas.addEventListener("mouseup", () => (mouseDown = false));
   canvas.addEventListener("mouseleave", () => (mouseDown = false));
+
+  // 键盘快捷键
+  window.addEventListener("keydown", e => {
+    if (e.key === "h" || e.key === "H") {
+      controlPanel.toggle();
+    }
+  });
 
   // 窗口大小调整
   window.addEventListener("resize", () => {
@@ -372,14 +407,17 @@ async function main() {
     }
 
     // 应用重力（向下）
-    wasm.applyGravity(0, 10); // 第一个参数是水平重力，第二个是垂直重力
+    wasm.applyGravity(0, controlPanel.settings.gravity);
+
+    // 实时更新阻尼系数
+    wasm.setDamping(controlPanel.settings.damping);
 
     // 鼠标交互
     if (mouseDown) {
       wasm.applyForce(mouseX, mouseY, 150, 150);
     }
 
-    // 更新物理
+    // 更新物理（使用当前阻尼设置）
     wasm.updateParticles(deltaTime, canvas.width, canvas.height);
 
     // 获取粒子数据
@@ -397,6 +435,9 @@ async function main() {
     ui.innerHTML = `
       粒子数量: ${PARTICLE_COUNT}<br>
       FPS: ${fps}<br>
+      重力: ${controlPanel.settings.gravity.toFixed(1)}<br>
+      阻尼: ${controlPanel.settings.damping.toFixed(3)}<br>
+      <br>
       鼠标点击拖动以推动粒子<br>
       使用 WebAssembly + WebGL
     `;
